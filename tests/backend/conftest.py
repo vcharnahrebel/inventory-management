@@ -12,13 +12,21 @@ server_path = Path(__file__).parent.parent.parent / "server"
 sys.path.insert(0, str(server_path))
 
 from main import app
+import mock_data
 
 
 @pytest.fixture
 def client():
-    """Create a test client for the FastAPI application."""
+    """Create a test client for the FastAPI application.
+
+    The orders list is mutable in-memory state (POST /api/restocking/orders
+    appends to it), so snapshot and restore it around each test to keep tests
+    isolated and order-independent.
+    """
+    orders_snapshot = list(mock_data.orders)
     with TestClient(app) as test_client:
         yield test_client
+    mock_data.orders[:] = orders_snapshot
 
 
 @pytest.fixture
